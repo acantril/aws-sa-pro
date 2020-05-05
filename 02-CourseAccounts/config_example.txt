@@ -1,0 +1,7 @@
+[profile A4L-PROD]
+    role_arn = arn:aws:iam::REPLACEME_PROD:role/OrganizationAccountAccessRole
+    source_profile = A4L-MASTER
+
+[profile A4L-DEV]
+    role_arn = arn:aws:iam::REPLACEME_DEV:role/OrganizationAccountAccessRole
+    source_profile = A4L-MASTER
