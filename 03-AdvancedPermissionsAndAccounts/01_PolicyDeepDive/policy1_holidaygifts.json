@@ -1,0 +1,32 @@
+
+{
+    "Version": "2012-10-17",
+    "Statement": 
+    [
+      {
+        "Effect":"Allow",
+        "Action":[
+           "s3:PutObject",
+           "s3:PutObjectAcl",
+           "s3:GetObject",
+           "s3:GetObjectAcl",
+           "s3:DeleteObject"
+        ],
+        "Resource":"arn:aws:s3:::holidaygifts/*"
+      },
+      {
+        "Effect": "Deny",
+        "Action": [
+          "s3:GetObject",
+          "s3:GetObjectAcl"
+        ],
+        "Resource":"arn:aws:s3:::holidaygifts/*",
+        "Condition": {
+            "DateGreaterThan": {"aws:CurrentTime": "2020-12-01T00:00:00Z"},
+            "DateLessThan": {"aws:CurrentTime": "2020-12-25T06:00:00Z"}
+        }
+      }
+    ]
+}
+
+
