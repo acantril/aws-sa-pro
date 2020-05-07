@@ -16,8 +16,7 @@
                 "StringNotEquals": {
                     "aws:RequestedRegion": [
                         "ap-southeast-2",
-                        "eu-west-1",
-                        "eu-east-1"
+                        "eu-west-1"
                     ]
                 }
             }
