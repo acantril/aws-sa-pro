@@ -1,0 +1,79 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+          "Sid": "CreateOrChangeOnlyWithBoundary",
+          "Effect": "Allow",
+          "Action": [
+              "iam:CreateUser",
+              "iam:DeleteUserPolicy",
+              "iam:AttachUserPolicy",
+              "iam:DetachUserPolicy",
+              "iam:PutUserPermissionsBoundary",
+              "iam:PutUserPolicy"
+          ],
+          "Resource": "*",
+          "Condition": {"StringEquals": 
+              {"iam:PermissionsBoundary": "arn:aws:iam::MASTERACCOUNTNUMBER:policy/a4luserboundary"}}
+      },
+      {
+          "Sid": "CloudWatchAndOtherIAMTasks",
+          "Effect": "Allow",
+          "Action": [
+              "cloudwatch:*",
+              "iam:GetUser",
+              "iam:ListUsers",
+              "iam:DeleteUser",
+              "iam:UpdateUser",
+              "iam:CreateAccessKey",
+              "iam:CreateLoginProfile",
+              "iam:GetAccountPasswordPolicy",
+              "iam:GetLoginProfile",
+              "iam:ListGroups",
+              "iam:ListGroupsForUser",
+              "iam:CreateGroup",
+              "iam:GetGroup",
+              "iam:DeleteGroup",
+              "iam:UpdateGroup",
+              "iam:CreatePolicy",
+              "iam:DeletePolicy",
+              "iam:DeletePolicyVersion",
+              "iam:GetPolicy",
+              "iam:GetPolicyVersion",
+              "iam:GetUserPolicy",
+              "iam:GetRolePolicy",
+              "iam:ListPolicies",
+              "iam:ListPolicyVersions",
+              "iam:ListEntitiesForPolicy",
+              "iam:ListUserPolicies",
+              "iam:ListAttachedUserPolicies",
+              "iam:ListRolePolicies",
+              "iam:ListAttachedRolePolicies",
+              "iam:SetDefaultPolicyVersion",
+              "iam:SimulatePrincipalPolicy",
+              "iam:SimulateCustomPolicy" 
+          ],
+          "NotResource": "arn:aws:iam::MASTERACCOUNTNUMBER:user/iamadmin"
+      },
+      {
+          "Sid": "NoBoundaryPolicyEdit",
+          "Effect": "Deny",
+          "Action": [
+              "iam:CreatePolicyVersion",
+              "iam:DeletePolicy",
+              "iam:DeletePolicyVersion",
+              "iam:SetDefaultPolicyVersion"
+          ],
+          "Resource": [
+              "arn:aws:iam::MASTERACCOUNTNUMBER:policy/a4luserboundary",
+              "arn:aws:iam::MASTERACCOUNTNUMBER:policy/a4ladminboundary"
+          ]
+      },
+      {
+          "Sid": "NoBoundaryUserDelete",
+          "Effect": "Deny",
+          "Action": "iam:DeleteUserPermissionsBoundary",
+          "Resource": "*"
+      }
+  ]
+}
