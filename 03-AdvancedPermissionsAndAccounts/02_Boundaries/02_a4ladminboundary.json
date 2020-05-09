@@ -53,7 +53,7 @@
               "iam:SimulatePrincipalPolicy",
               "iam:SimulateCustomPolicy" 
           ],
-          "NotResource": "arn:aws:iam::MASTERACCOUNTNUMBER:user/iamadmin"
+          "NotResource": "arn:aws:iam::MASTERACCOUNTNUMBER:user/bob"
       },
       {
           "Sid": "NoBoundaryPolicyEdit",
