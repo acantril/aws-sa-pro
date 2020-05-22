@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  petpics1, 2 and 3
+  IAM Role
+Parameters:
+  AccountToTrust:
+    Description: A4LMasterAccountID
+    Type: String
+Resources:
+  petpics1:
+    Type:  AWS::S3::Bucket
+  petpics2:
+    Type:  AWS::S3::Bucket
+  petpics3:
+    Type:  AWS::S3::Bucket
+  CrossAccontS3Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+              - !Join ["", ["arn:aws:iam::", !Ref AccountToTrust, ":root"]]
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 's3:ListAllMyBuckets'
+                Resource: 'arn:aws:s3:::*'
+              - Effect: Allow
+                Action: ['s3:ListBucket', 's3:GetBucketLocation']
+                Resource: !GetAtt petpics3.Arn
+              - Effect: Allow
+                Action: ['s3:GetObject', 's3:PutObject']
+                Resource: !Join ["", [!GetAtt petpics3.Arn, "/*"]]
+

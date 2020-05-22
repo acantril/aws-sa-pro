@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  This template implements an IAM user 'Bob'
+  And permissions appropriate for Bob.
+Parameters:
+  bobpassword:
+    NoEcho: true
+    Description: IAM User bob Password
+    Type: String
+    MinLength: 4
+    MaxLength: 30
+    AllowedPattern: ^[a-zA-Z0-9]*$
+Resources:
+  bob:
+    Type: AWS::IAM::User
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+        - !Ref policy
+      LoginProfile:
+        Password: !Ref bobpassword
+        PasswordResetRequired: "true"
+  policy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Allow access to all S3 buckets and RoleAssume
+      ManagedPolicyName: S3AndRoleAssume
+      PolicyDocument: 
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: 's3:*'
+            Resource: '*' 
+          - Effect: Allow
+            Action: 'sts:AssumeRole'
+            Resource: '*'
