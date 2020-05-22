@@ -20,7 +20,7 @@ Resources:
         - !Ref policy
       LoginProfile:
         Password: !Ref bobpassword
-        PasswordResetRequired: "true"
+        PasswordResetRequired: "false"
   policy:
     Type: AWS::IAM::ManagedPolicy
     Properties: 
