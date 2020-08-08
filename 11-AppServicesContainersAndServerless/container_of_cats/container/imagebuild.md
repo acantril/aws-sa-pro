@@ -9,7 +9,7 @@ To test the container ... tcp/80 will need to be open on the instance security g
 
 sudo amazon-linux-extras install docker
 sudo service docker start
-sudo usermod -a -G docker ec2-user
+sudo usermod -a -G docker ssm-user
 
 ## Use Git to get the lesson files
 
