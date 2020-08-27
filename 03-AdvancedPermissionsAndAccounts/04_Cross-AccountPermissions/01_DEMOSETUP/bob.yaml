@@ -5,11 +5,12 @@ Description: >
 Parameters:
   bobpassword:
     NoEcho: true
-    Description: IAM User bob Password
+    Description: IAM User bob Password.
     Type: String
     MinLength: 4
     MaxLength: 30
     AllowedPattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
+    ConstraintDescription: Password must be a minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character.
 Resources:
   bob:
     Type: AWS::IAM::User
