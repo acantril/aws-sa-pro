@@ -9,7 +9,7 @@ Parameters:
     Type: String
     MinLength: 4
     MaxLength: 30
-    AllowedPattern: ^[a-zA-Z0-9]*$
+    AllowedPattern: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$
 Resources:
   bob:
     Type: AWS::IAM::User
@@ -23,15 +23,15 @@ Resources:
         PasswordResetRequired: "false"
   policy:
     Type: AWS::IAM::ManagedPolicy
-    Properties: 
+    Properties:
       Description: Allow access to all S3 buckets and RoleAssume
       ManagedPolicyName: S3AndRoleAssume
-      PolicyDocument: 
+      PolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Action: 's3:*'
-            Resource: '*' 
+            Action: "s3:*"
+            Resource: "*"
           - Effect: Allow
-            Action: 'sts:AssumeRole'
-            Resource: '*'
+            Action: "sts:AssumeRole"
+            Resource: "*"
