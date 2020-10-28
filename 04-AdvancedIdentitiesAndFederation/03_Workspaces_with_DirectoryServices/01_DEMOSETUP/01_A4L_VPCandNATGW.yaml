@@ -387,12 +387,12 @@ Resources:
     Type: 'AWS::EC2::NatGateway'
     Properties:
       AllocationId: !GetAtt EIPB.AllocationId
-      SubnetId: !Ref SubnetWEBA
+      SubnetId: !Ref SubnetWEBB
   NatGatewayC:
     Type: 'AWS::EC2::NatGateway'
     Properties:
       AllocationId: !GetAtt EIPC.AllocationId
-      SubnetId: !Ref SubnetWEBA
+      SubnetId: !Ref SubnetWEBC
   RouteTablePrivateA: 
     Type: 'AWS::EC2::RouteTable'
     Properties:
