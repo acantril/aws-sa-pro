@@ -9,7 +9,6 @@ Parameters:
     Type: String
     MinLength: 4
     MaxLength: 30
-    AllowedPattern: ^[a-zA-Z0-9]*$
 Resources:
   bob:
     Type: AWS::IAM::User
