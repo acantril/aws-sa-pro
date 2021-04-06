@@ -1,0 +1,595 @@
+
+Description:  Animals4Life base VPC Template + Boostrapped Wordpress
+Parameters:
+  LatestAmiId:
+    Description: AMI for Wordpess Instance (default is latest AmaLinux2)
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  DBName:
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric
+      characters.
+    Default: 'a4lwordpress'
+    Description: The WordPress database name
+    MaxLength: '64'
+    MinLength: '1'
+    Type: String
+  DBPassword:
+    ConstraintDescription: must contain only alphanumeric characters.
+    Description: The WordPress database admin account password
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+    Default: '4n1m4l$4L1f3'
+  DBRootPassword:
+    ConstraintDescription: must contain only alphanumeric characters.
+    Description: MySQL root password
+    MaxLength: '41'
+    MinLength: '8'
+    NoEcho: 'true'
+    Type: String
+    Default: '4n1m4l$4L1f3'
+  DBUser:
+    ConstraintDescription: must begin with a letter and contain only alphanumeric
+      characters.
+    Description: The WordPress database admin account username
+    Default: 'a4lwordpress'
+    MaxLength: '16'
+    MinLength: '1'
+    NoEcho: 'true'
+    Type: String
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.16.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: a4l-vpc1
+  IPv6CidrBlock:
+    Type: AWS::EC2::VPCCidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AmazonProvidedIpv6CidrBlock: true
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: A4L-vpc1-igw
+  InternetGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  RouteTableWeb: 
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: A4L-vpc1-rt-web
+  RouteTableWebDefaultIPv4: 
+    Type: 'AWS::EC2::Route'
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId:
+        Ref: RouteTableWeb
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId:
+        Ref: InternetGateway
+  RouteTableWebDefaultIPv6: 
+    Type: 'AWS::EC2::Route'
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId:
+        Ref: RouteTableWeb
+      DestinationIpv6CidrBlock: '::/0'
+      GatewayId: 
+        Ref: InternetGateway
+  RouteTableAssociationWebA:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetWEBA
+      RouteTableId:
+        Ref: RouteTableWeb
+  RouteTableAssociationWebB:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetWEBB
+      RouteTableId:
+        Ref: RouteTableWeb
+  RouteTableAssociationWebC:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SubnetWEBC
+      RouteTableId:
+        Ref: RouteTableWeb
+  SubnetReservedA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.16.0.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '00::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-reserved-A
+  SubnetReservedB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.16.64.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '04::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-reserved-B
+  SubnetReservedC:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: 10.16.128.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '08::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-reserved-C
+  SubnetDBA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.16.16.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '01::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-db-A
+  SubnetDBB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.16.80.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '05::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-db-B
+  SubnetDBC:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: 10.16.144.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '09::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-db-C
+  SubnetAPPA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.16.32.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '02::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-app-A
+  SubnetAPPB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.16.96.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '06::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-app-B
+  SubnetAPPC:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: 10.16.160.0/20
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '0A::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-app-C
+  SubnetWEBA:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: 10.16.48.0/20
+      MapPublicIpOnLaunch: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '03::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-web-A
+  SubnetWEBB:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: 10.16.112.0/20
+      MapPublicIpOnLaunch: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '07::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-web-B
+  SubnetWEBC:
+    Type: AWS::EC2::Subnet
+    DependsOn: IPv6CidrBlock
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: 10.16.176.0/20
+      MapPublicIpOnLaunch: true
+      Ipv6CidrBlock: 
+        Fn::Sub:
+          - "${VpcPart}${SubnetPart}"
+          - SubnetPart: '0B::/64'
+            VpcPart: !Select [ 0, !Split [ '00::/56', !Select [ 0, !GetAtt VPC.Ipv6CidrBlocks ]]]
+      Tags:
+        - Key: Name
+          Value: sn-web-C
+  IPv6WorkaroundSubnetWEBA:
+    Type: Custom::SubnetModify
+    Properties:
+      ServiceToken: !GetAtt IPv6WorkaroundLambda.Arn
+      SubnetId: !Ref SubnetWEBA
+  IPv6WorkaroundSubnetWEBB:
+    Type: Custom::SubnetModify
+    Properties:
+      ServiceToken: !GetAtt IPv6WorkaroundLambda.Arn
+      SubnetId: !Ref SubnetWEBB
+  IPv6WorkaroundSubnetWEBC:
+    Type: Custom::SubnetModify
+    Properties:
+      ServiceToken: !GetAtt IPv6WorkaroundLambda.Arn
+      SubnetId: !Ref SubnetWEBC
+  IPv6WorkaroundRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "ipv6-fix-logs-${AWS::StackName}"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              Resource: arn:aws:logs:*:*:*
+        - PolicyName: !Sub "ipv6-fix-modify-${AWS::StackName}"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - ec2:ModifySubnetAttribute
+              Resource: "*"
+  IPv6WorkaroundLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: "index.lambda_handler"
+      Code: #import cfnresponse below required to send respose back to CFN
+        ZipFile:
+          Fn::Sub: |
+            import cfnresponse
+            import boto3
+      
+            def lambda_handler(event, context):
+              if event['RequestType'] is 'Delete':
+                cfnresponse.send(event, context, cfnresponse.SUCCESS)
+                return
+      
+              responseValue = event['ResourceProperties']['SubnetId']
+              ec2 = boto3.client('ec2', region_name='${AWS::Region}')
+              ec2.modify_subnet_attribute(AssignIpv6AddressOnCreation={
+                              'Value': True
+                              },
+                              SubnetId=responseValue)
+              responseData = {}
+              responseData['SubnetId'] = responseValue
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+      Runtime: python2.7
+      Role: !GetAtt IPv6WorkaroundRole.Arn
+      Timeout: 30
+  PublicEC2:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: !Ref LatestAmiId
+      IamInstanceProfile: !Ref WordpressInstanceProfile
+      SubnetId: !Ref SubnetWEBA
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      Tags:
+        - Key: Name
+          Value: A4L-Wordpress
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          # System Updates
+          yum -y update
+          yum -y upgrade
+          # STEP 2 - Install system software - including Web and DB
+          yum install -y mariadb-server httpd wget cowsay
+          amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+          # STEP 3 - Web and DB Servers Online - and set to startup
+          systemctl enable httpd
+          systemctl enable mariadb
+          systemctl start httpd
+          systemctl start mariadb
+          # STEP 4 - Set MARIADB Root Password
+          mysqladmin -u root password ${DBRootPassword}
+          # STEP 5 - Install Wordpress
+          wget http://wordpress.org/latest.tar.gz -P /var/www/html
+          cd /var/www/html
+          tar -zxvf latest.tar.gz
+          cp -rvf wordpress/* .
+          rm -R wordpress
+          rm latest.tar.gz
+          # STEP 6 - Configure Wordpress
+          cp ./wp-config-sample.php ./wp-config.php
+          sed -i "s/'database_name_here'/'${DBName}'/g" wp-config.php
+          sed -i "s/'username_here'/'${DBUser}'/g" wp-config.php
+          sed -i "s/'password_here'/'${DBPassword}'/g" wp-config.php
+          # Step 6a - permissions   
+          usermod -a -G apache ec2-user   
+          chown -R ec2-user:apache /var/www
+          chmod 2775 /var/www
+          find /var/www -type d -exec chmod 2775 {} \;
+          find /var/www -type f -exec chmod 0664 {} \;
+          # STEP 7 Create Wordpress DB
+          echo "CREATE DATABASE ${DBName};" >> /tmp/db.setup
+          echo "CREATE USER '${DBUser}'@'localhost' IDENTIFIED BY '${DBPassword}';" >> /tmp/db.setup
+          echo "GRANT ALL ON ${DBName}.* TO '${DBUser}'@'localhost';" >> /tmp/db.setup
+          echo "FLUSH PRIVILEGES;" >> /tmp/db.setup
+          mysql -u root --password=${DBRootPassword} < /tmp/db.setup
+          sudo rm /tmp/db.setup
+          # STEP 8 COWSAY
+          echo "#!/bin/sh" > /etc/update-motd.d/40-cow
+          echo 'cowsay "Amazon Linux 2 AMI - Animals4Life"' >> /etc/update-motd.d/40-cow
+          chmod 755 /etc/update-motd.d/40-cow
+          rm /etc/update-motd.d/30-banner
+          update-motd
+          # STEP 9 CWAgent Install & Config
+          rpm -Uvh https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+          mkdir -p /usr/share/collectd/
+          touch /usr/share/collectd/types.db
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${CWAgentConfig} -s
+          # STEP 10 SIGNAL FINISH OF INSTALL & CONFIG
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource PublicEC2 --region ${AWS::Region}
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Enable SSH access via port 22 IPv4 & v6
+      SecurityGroupIngress:
+        - Description: 'Allow SSH IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: '0.0.0.0/0'
+        - Description: 'Allow HTTP IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: '0.0.0.0/0'
+        - Description: 'Allow SSH IPv6 IN'
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIpv6: ::/0
+  WordpressRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        - "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+  WordpressInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref WordpressRole
+  CWAgentConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Type: 'String'
+      Value: |
+        {
+          "agent": {
+            "metrics_collection_interval": 60,
+            "run_as_user": "root"
+          },
+          "logs": {
+            "logs_collected": {
+              "files": {
+                "collect_list": [
+                  {
+                    "file_path": "/var/log/secure",
+                    "log_group_name": "/var/log/secure",
+                    "log_stream_name": "{instance_id}"
+                  },
+                  {
+                    "file_path": "/var/log/httpd/access_log",
+                    "log_group_name": "/var/log/httpd/access_log",
+                    "log_stream_name": "{instance_id}"
+                  },
+                  {
+                    "file_path": "/var/log/httpd/error_log",
+                    "log_group_name": "/var/log/httpd/error_log",
+                    "log_stream_name": "{instance_id}"
+                  }
+                ]
+              }
+            }
+          },
+          "metrics": {
+            "append_dimensions": {
+              "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+              "ImageId": "${aws:ImageId}",
+              "InstanceId": "${aws:InstanceId}",
+              "InstanceType": "${aws:InstanceType}"
+            },
+            "metrics_collected": {
+              "collectd": {
+                "metrics_aggregation_interval": 60
+              },
+              "cpu": {
+                "measurement": [
+                  "cpu_usage_idle",
+                  "cpu_usage_iowait",
+                  "cpu_usage_user",
+                  "cpu_usage_system"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ],
+                "totalcpu": false
+              },
+              "disk": {
+                "measurement": [
+                  "used_percent",
+                  "inodes_free"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "diskio": {
+                "measurement": [
+                  "io_time",
+                  "write_bytes",
+                  "read_bytes",
+                  "writes",
+                  "reads"
+                ],
+                "metrics_collection_interval": 60,
+                "resources": [
+                  "*"
+                ]
+              },
+              "mem": {
+                "measurement": [
+                  "mem_used_percent"
+                ],
+                "metrics_collection_interval": 60
+              },
+              "netstat": {
+                "measurement": [
+                  "tcp_established",
+                  "tcp_time_wait"
+                ],
+                "metrics_collection_interval": 60
+              },
+              "statsd": {
+                "metrics_aggregation_interval": 60,
+                "metrics_collection_interval": 10,
+                "service_address": ":8125"
+              },
+              "swap": {
+                "measurement": [
+                  "swap_used_percent"
+                ],
+                "metrics_collection_interval": 60
+              }
+            }
+          }
+        }
