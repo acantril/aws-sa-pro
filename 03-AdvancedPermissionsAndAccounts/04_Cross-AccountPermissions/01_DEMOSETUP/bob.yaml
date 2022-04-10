@@ -4,11 +4,11 @@ Description: >
   And permissions appropriate for Bob.
 Parameters:
   bobpassword:
-    NoEcho: true
     Description: IAM User bob Password
     Type: String
-    MinLength: 4
+    MinLength: 8
     MaxLength: 30
+    Default: "4n1m4l54L1f3!"
 Resources:
   bob:
     Type: AWS::IAM::User

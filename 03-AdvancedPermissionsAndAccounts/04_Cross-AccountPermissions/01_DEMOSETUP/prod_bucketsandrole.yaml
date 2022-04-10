@@ -4,7 +4,7 @@ Description: >
   IAM Role
 Parameters:
   AccountToTrust:
-    Description: A4LMasterAccountID
+    Description: "A4LManagement(General) AccountID"
     Type: String
 Resources:
   petpics1:

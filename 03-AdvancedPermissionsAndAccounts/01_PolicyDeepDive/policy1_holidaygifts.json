@@ -22,8 +22,8 @@
         ],
         "Resource":"arn:aws:s3:::holidaygifts/*",
         "Condition": {
-            "DateGreaterThan": {"aws:CurrentTime": "2020-12-01T00:00:00Z"},
-            "DateLessThan": {"aws:CurrentTime": "2020-12-25T06:00:00Z"}
+            "DateGreaterThan": {"aws:CurrentTime": "2022-12-01T00:00:00Z"},
+            "DateLessThan": {"aws:CurrentTime": "2022-12-25T06:00:00Z"}
         }
       }
     ]

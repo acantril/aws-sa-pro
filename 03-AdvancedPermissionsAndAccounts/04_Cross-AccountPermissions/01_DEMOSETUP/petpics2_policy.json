@@ -4,7 +4,7 @@
       {
           "Effect": "Allow",
           "Principal": {
-              "AWS": "arn:aws:iam::REPLACEMEMASTERACCOUNTID:user/bob"
+              "AWS": "arn:aws:iam::REPLACEMEMANAGEMENTACCOUNTID:user/bob"
           },
           "Action": [
               "s3:GetObject",
