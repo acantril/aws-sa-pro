@@ -68,12 +68,6 @@
               "arn:aws:iam::MASTERACCOUNTNUMBER:policy/a4luserboundary",
               "arn:aws:iam::MASTERACCOUNTNUMBER:policy/a4ladminboundary"
           ]
-      },
-      {
-          "Sid": "NoBoundaryUserDelete",
-          "Effect": "Deny",
-          "Action": "iam:DeleteUserPermissionsBoundary",
-          "Resource": "*"
       }
   ]
 }
