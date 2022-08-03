@@ -393,6 +393,10 @@ Resources:
     Properties:
       AllocationId: !GetAtt EIPC.AllocationId
       SubnetId: !Ref SubnetWEBC
+  EgressOnlyInternetGateway:
+    Type: 'AWS::EC2::EgressOnlyInternetGateway'
+    Properties:
+      VpcId: !Ref VPC
   RouteTablePrivateA: 
     Type: 'AWS::EC2::RouteTable'
     Properties:
@@ -432,6 +436,25 @@ Resources:
       RouteTableId: !Ref RouteTablePrivateC
       DestinationCidrBlock: '0.0.0.0/0'
       NatGatewayId: !Ref NatGatewayC
+  RouteIPv6A: 
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTablePrivateA
+      DestinationIpv6CidrBlock: '::/0'
+      EgressOnlyInternetGatewayId: !Ref EgressOnlyInternetGateway
+  RouteIPv6B: 
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTablePrivateB
+      DestinationIpv6CidrBlock: '::/0'
+      EgressOnlyInternetGatewayId: !Ref EgressOnlyInternetGateway
+  RouteIPv6C: 
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTablePrivateC
+      DestinationIpv6CidrBlock: '::/0'
+      EgressOnlyInternetGatewayId: !Ref EgressOnlyInternetGateway
+
   RouteTableAssociationReservedA:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
