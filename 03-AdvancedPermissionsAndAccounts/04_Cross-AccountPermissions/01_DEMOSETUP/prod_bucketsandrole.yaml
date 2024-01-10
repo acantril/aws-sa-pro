@@ -9,6 +9,10 @@ Parameters:
 Resources:
   petpics1:
     Type:  AWS::S3::Bucket
+    Properties:
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: ObjectWriter
   petpics2:
     Type:  AWS::S3::Bucket
   petpics3:
